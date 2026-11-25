@@ -1,0 +1,16 @@
+{
+ "wave": "r31-dense (0083-0178)",
+ "total_request_files_after": 115,
+ "new_files": 96,
+ "unique_ids": 891,
+ "kinds": {"cells": 86, "nodes": 5, "audit": 22, "orphans": 1, "standing": 1},
+ "coverage": {
+  "FAST": "26 букв S2A-S2Z x номера 01-12; S1,S3-S10 x01-07; S7F,S7G; всего ~420 id",
+  "P": "P-0001 - P-0200 сплошь (чанки по 8)",
+  "W": "W1-W4 x 0001-0050 чанками по 17",
+  "nodes": "F-030..F-100, L-100..L-140, C-004..C-012",
+  "audit": "DIP1-DIP9 (префиксы, покрывают DIP1x-DIP9x), MAIN, W1-W4, FAST-S1/S3-S8",
+  "orphans": "refresh"
+ },
+ "note": "неотработанные заявки лежат в request/ до следующего serve; потеря части при сбое serve ничего не стоит - пере-постановка тривиальна"
+}
