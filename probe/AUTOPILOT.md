@@ -4,26 +4,38 @@
 
 ## Архитектура цикла
 
-1. **WSL-мост у пользователя**: `bridge.sh` (демон, цикл 30 с) ходит в `probe-bridge`; `mirror.sh` синкает `probe-bridge/{data,ack,state,PLAN.md,INSTRUCTION.md,AUTOPILOT.md,STATE.md}` в папку `probe/` этого репозитория и обратно тянет `probe/outbox/*.jsonl` в локальный `outbox\`. `main` запускает `python3 tools/probe_bridge.py --serve`, ответы кладёт в `ack\`, откуда они снова попадают в `probe/ack/`.
+1. **WSL-мост у пользователя**: `bridge.sh` (демон, цикл 30 с) ходит в `probe-bridge`; `mirror.sh` синкает `probe-bridge/{data,ack,state,PLAN.md,INSTRUCTION.md,AUTOPILOT.md,STATE.md}` в папку `probe/` этого репозитория, тянет `probe/outbox/*.jsonl` в локальный `outbox\` и разбирает раунды из issues с label `probe-round`. `main` запускает `python3 tools/probe_bridge.py --serve`, ответы кладёт в `ack\`, откуда они снова попадают в `probe/ack/`.
 2. **Облачный пульс (эта задача)**: чистая функция от содержимого репозитория. Работает по шагам ниже.
-3. Раунды нумеруются счётчиком `probe/state/cloud-round-counter.json` (ключ `next`).
+3. Раунды облака нумеруются номером issue (мост так их различает); локальные раунды — файлами `roundN.jsonl`.
 
 ## Шаги облачного пульса
 
 1. Прочитать `probe/AUTOPILOT.md` (этот файл) и `probe/STATE.md`.
 2. Прочитать `probe/state/worklog.json` — карта уже обработанных файлов. Ключи — имена файлов относительно `probe-bridge` (`data/XXXX-имя.md`, `ack/roundN.json`, `ack/roundN-verdict.json`).
 3. Прочитать `probe/state/probe-seen.json` — дедуп по парам `[kind, atoms]`. Уже заданные пары повторять нельзя.
-4. Сравнить содержимое `probe/data/` и `probe/ack/` с worklog: обработать ТОЛЬКО файлы, которых нет в worklog. Новые `ack`-вердикты менять на новые вопросы не заставляют; их задача — обновить STATE-заметки. Если каталог `probe/data/` или `probe/ack/` вернул 404, ошибку или пуст — новых данных НЕТ; любая ошибка чтения трактуется как «пусто», задача не падает, а делает холостой пульс (шаг 7).
+4. Сравнить содержимое `probe/data/` и `probe/ack/` с worklog: обработать ТОЛЬКО файлы, которых нет в worklog. Новые `ack`-вердикты менять на новые вопросы не заставляют; их задача — обновить STATE-заметки. Если каталог `probe/data/` или `probe/ack/` вернул 404, ошибку или пуст — новых данных НЕТ; любая ошибка чтения трактуется как «пусто», задача не падает, а делает холостой пульс (шаг 8).
 5. Найти несходимости и составить вопросы по формату ниже.
-6. ОТПРАВИТЬ ОДНИМ КОММИТОМ (push_files): `probe/outbox/cloud-round-<N>.jsonl` (N из счётчика) + обновлённый `probe/state/worklog.json` + `probe/state/cloud-round-counter.json` (`next` += 1) + `probe/last-pulse.txt` (текущая UTC-время). Многострочный JSON валидатор принимает.
-7. Холостой пульс (новых файлов нет): только обновить `probe/last-pulse.txt` одним коммитом и ответить одной строкой. Заметки снимать в `probe/cloud-notes.md`.
+6. ОТПРАВИТЬ РАУНД, попытка 1 — push_files одним коммитом: `probe/outbox/cloud-round-<N>.jsonl` (N = `next` из `probe/state/cloud-round-counter.json`, затем `next` + 1) + обновлённые `probe/state/worklog.json` (обработанные файлы пометить `cloud-round-<N>`) + `probe/state/cloud-round-counter.json` + `probe/state/probe-seen.json` (добавить пары) + `probe/last-pulse.txt` (UTC-время пульса). Многострочный JSON валидатор принимает.
+7. ОТПРАВИТЬ РАУНД, попытка 2 — если push_files недоступен (функции нет в tools.github_app) или упал с любой ошибкой (403 и прочие), отправь ВЕСЬ раунд одним issue через `issue_write`: label **probe-round**, тело строго:
+
+```
+PROCESSED: <обработанные файлы через запятую или none>
+QUESTIONS:
+<JSONL-строки вопросов, по одной на строку, или none>
+SEEN-ADD:
+<JSON-массив добавленных пар дедупа или none>
+```
+
+Номер раунда писать не нужно — мост возьмёт номер issue. Закрывать issue не нужно. В ответе укажи, каким каналом отправил (push или issue).
+
+8. Холостой пульс (новых файлов нет): если push работает — одним коммитом только `probe/last-pulse.txt` с UTC-временем; если push недоступен — просто ответь одной строкой, issue НЕ создавай. Заметки снимать в `probe/cloud-notes.md`.
 
 ## Формат вопроса (одна JSON-строка на вопрос)
 
 - `question` — формулировка ≥20 символов, по-русски, с конкретикой.
 - `atoms` — массив существующих id ячеек (только те, что реально встречаются в прочитанных срезах).
 - `kind`: `units` | `numbers` | `order` | `gap-as-support` | `no-locator`.
-- `numbers` — ≥2 чисел, КАЖДОЕ обязано буквально встречаться в тексте своих ячеек (научная запись нормализуется валидатором).
+- `numbers` — ≥2 чисел, КАждое обязано буквально встречаться в тексте своих ячеек (научная запись нормализуется валидатором).
 - `verifiable` — обязательное поле: как проверить (честный recalc).
 - Для `units` и `order` обязателен `recalc` — пересчёт, который сходится/не сходится.
 - ≤24 вопроса на файл. Правило main: «3 точных вопроса лучше 20 шумных».
@@ -41,14 +53,10 @@
 ## Запреты облачному пульсу
 
 - НЕ ТРОГАТЬ: `probe/data/`, `probe/ack/`, `probe/INSTRUCTION.md`, `probe/PLAN.md` — их пишет только мост с WSL-стороны.
-- Писать только в: `probe/outbox/`, `probe/last-pulse.txt`, `probe/state/worklog.json`, `probe/state/cloud-round-counter.json`, `probe/state/probe-seen.json` (только ДОБАВЛЯТЬ пары дедупа), `probe/cloud-notes.md`, `probe/STATE.md` (обновлять заметки).
+- Писать только в: `probe/outbox/`, `probe/last-pulse.txt`, `probe/state/worklog.json`, `probe/state/cloud-round-counter.json`, `probe/state/probe-seen.json` (только ДОБАВЛЯТЬ пары дедупа), `probe/cloud-notes.md`, `probe/STATE.md` (обновлять заметки), issues с label `probe-round`.
 - Не использовать интернет для чисел и проверки фактов: только текст срезов.
 - Не править карту, kg, вердикты, связи — это работа `main`.
 - Сомневаешься, дефект ли это — пиши вопрос «проверить, дефект ли». Холостой ход лучше шумного вопроса.
-
-## Запасной канал
-
-Если push_files упал с 403: отправить раунд через `issue_write` (label: probe-round): в body — сначала строка `ROUND <N>`, дальше JSONL вопросов. Мост заберёт из issues. Закрывать issue не нужно.
 
 ## Восстановление после сбоя
 
