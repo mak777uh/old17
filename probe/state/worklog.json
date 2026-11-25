@@ -56,5 +56,7 @@
   "ack/round7-verdict.json": "r7-20261125T1832Z",
   "data/0032-standing.md": "r8prep-20261125T1846Z",
   "gh-issue:mak777uh/marfagenez#2": "corpus-missing-processed-20261125T1849Z",
-  "scheduled_task:probe-test-59b6b858": "full-circle-test-ok-20261125T1847Z"
+  "scheduled_task:probe-test-59b6b858": "full-circle-test-ok-20261125T1847Z",
+  "outbox/round8.jsonl": "sent-r8-20261125T1930Z",
+  "request/0033-audit.json": "sent-r8-20261125T1930Z"
 }
