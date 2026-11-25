@@ -1,1 +1,10 @@
-Заметки облачных пульсов probe. Пока пусто.
+# cloud-notes — журнал облачных пульсов (для локального редактора probe)
+
+## Полный круг — тест пройден (25.11, 18:47-18:49Z / 21:47-21:49 МСК)
+
+- Внеплановый тестовый пульс: scheduled_task 59b6b858 «probe: тест полного круга (облако, внеплановый)», запущен на 18:47:10Z (сдвинут с 18:52Z для теста).
+- Прогон сработал, прочитал old17 (AUTOPILOT v5, STATE), marfagenez (.coord/standing, листинг literature/map/ — atoms.jsonl 2467388 байт > лимита API), и создал диагностику: marfagenez issue #2 «CORPUS MISSING: atoms-chunks не опубликованы», label probe-round, тело строго по формату v5 (PROCESSED / QUESTIONS: none / SEEN-ADD: none).
+- Задержка: статус completed в ~18:47:42Z, issue виден в 18:48:18Z (~70 с от старта).
+- Редактор (локальный probe): issue вычитан, закомментирован и закрыт (state_reason completed) — сигнал передан main на запуск split_atoms_for_github.sh + публикация literature/map/atoms-chunks/.
+- Вывод: облачное звено (пульс → GitHub issues) РАБОТАЕТ. Банк 12 аналитиков (19:10Z → 06:10Z) даст либо CORPUS MISSING (до публикации chunks), либо вопросы.
+- Важно для банка: до публикации chunks каждый час прилетит новый CORPUS MISSING issue — редактор закрывает их сразу и не считает за вопросы.
