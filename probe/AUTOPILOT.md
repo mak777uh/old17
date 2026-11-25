@@ -12,7 +12,7 @@
 
 1. Прочитать `probe/AUTOPILOT.md` (этот файл) и `probe/STATE.md`.
 2. Прочитать `probe/state/worklog.json` — карта уже обработанных файлов. Ключи — имена файлов относительно `probe-bridge` (`data/XXXX-имя.md`, `ack/roundN.json`, `ack/roundN-verdict.json`).
-3. Прочитать `probe/state/probe-seen.json` — дедуп по парам `[kind, atoms]`. Уже заданные пары повторять нельзя.
+3. Прочитать `probe/state/probe-seen.json` — справочная история заданных пар `[kind, atoms]`: не повторяй ту же суть на тех же ячейках. Машинная дедупликация валидатора ведётся по ТЕКСТУ вопроса: дословно уже заданный вопрос будет отклонён.
 4. Сравнить содержимое `probe/data/` и `probe/ack/` с worklog: обработать ТОЛЬКО файлы, которых нет в worklog. Новые `ack`-вердикты менять на новые вопросы не заставляют; их задача — обновить STATE-заметки. Если каталог `probe/data/` или `probe/ack/` вернул 404, ошибку или пуст — новых данных НЕТ; любая ошибка чтения трактуется как «пусто», задача не падает, а делает холостой пульс (шаг 8).
 5. Найти несходимости и составить вопросы по формату ниже.
 6. ОТПРАВИТЬ РАУНД, попытка 1 — push_files одним коммитом: `probe/outbox/cloud-round-<N>.jsonl` (N = `next` из `probe/state/cloud-round-counter.json`, затем `next` + 1) + обновлённые `probe/state/worklog.json` (обработанные файлы пометить `cloud-round-<N>`) + `probe/state/cloud-round-counter.json` + `probe/state/probe-seen.json` (добавить пары) + `probe/last-pulse.txt` (UTC-время пульса). Многострочный JSON валидатор принимает.

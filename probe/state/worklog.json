@@ -50,5 +50,8 @@
   "ack/round6.json": "bootstrap-20261125T1808Z",
   "ack/test1.json": "bootstrap-20261125T1808Z",
   "ack/test2.json": "bootstrap-20261125T1808Z",
-  "ack/test3.json": "bootstrap-20261125T1808Z"
+  "ack/test3.json": "bootstrap-20261125T1808Z",
+  "ack/round7.json": "r7-20261125T1832Z",
+  "ack/round7-retry.json": "r7-20261125T1832Z",
+  "ack/round7-verdict.json": "r7-20261125T1832Z"
 }
