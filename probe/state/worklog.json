@@ -1,1 +1,4 @@
-{"note": "see local state/worklog.json; r16 marks: data/0028+0010 read clean, ack/round14-verdict processed +4.5 total 23.0, requests 0043-0045 sent at 20261125T1935Z"}
+{
+  "note": "probe worklog snapshot 2026-11-25T19:50Z — full local mirror pushed for durability; labs r20-r24 with timestamps approx (labels rNN authoritative); latest: request/0056-audit-node-pairs sent r24; outbox empty (round15 verdict processed +1.0, total 24.0); pending: verdict round11 + serve of 0051-0056",
+  "counts": { "seen_entries_local": 65, "requests_sent_total": "0001-0056", "rounds_sent": 15, "score_total": 24.0, "false_alarms_sent": 0 }
+}
